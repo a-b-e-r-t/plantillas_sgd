@@ -1,0 +1,380 @@
+services:
+
+  plantillas_diresa:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_diresa
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.diresa
+    ports:
+      - "3000:3000"
+    networks:
+      - web
+
+  plantillas_draa:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_draa
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.draa
+    ports:
+      - "3001:3000"
+    networks:
+      - web
+
+  plantillas_drea:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_drea
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.drea
+    ports:
+      - "3002:3000"
+    networks:
+      - web
+
+  plantillas_drtca:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_drtca
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.drtca
+    ports:
+      - "3003:3000"
+    networks:
+      - web
+
+  plantillas_gra:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_gra
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.gra
+    ports:
+      - "3004:3000"
+    networks:
+      - web
+
+  plantillas_munivilcas:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_munivilcas
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.munivilcas
+    ports:
+      - "3005:3000"
+    networks:
+      - web
+
+  plantillas_prider:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_prider
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.prider
+    ports:
+      - "3006:3000"
+    networks:
+      - web
+
+  plantillas_redcentro:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_redcentro
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.redcentro
+    ports:
+      - "3007:3000"
+    networks:
+      - web
+
+  plantillas_redcora:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_redcora
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.redcora
+    ports:
+      - "3008:3000"
+    networks:
+      - web
+
+  plantillas_redhuamanga:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_redhuamanga
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.redhuamanga
+    ports:
+      - "3009:3000"
+    networks:
+      - web
+
+  plantillas_redhuanta:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_redhuanta
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.redhuanta
+    ports:
+      - "3010:3000"
+    networks:
+      - web
+
+  plantillas_redpuquio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_redpuquio
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.redpuquio
+    ports:
+      - "3011:3000"
+    networks:
+      - web
+
+  plantillas_redsanfrancisco:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_redsanfrancisco
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.redsanfrancisco
+    ports:
+      - "3012:3000"
+    networks:
+      - web
+
+  plantillas_redsanmiguel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_redsanmiguel
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.redsanmiguel
+    ports:
+      - "3013:3000"
+    networks:
+      - web
+
+  plantillas_ugcangallo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_ugcangallo
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.ugcangallo
+    ports:
+      - "3014:3000"
+    networks:
+      - web
+
+  plantillas_ugfajardo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_ugfajardo
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.ugfajardo
+    ports:
+      - "3015:3000"
+    networks:
+      - web
+
+  plantillas_ughuamanga:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_ughuamanga
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.ughuamanga
+    ports:
+      - "3016:3000"
+    networks:
+      - web
+
+  plantillas_ughuancasancos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_ughuancasancos
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.ughuancasancos
+    ports:
+      - "3017:3000"
+    networks:
+      - web
+
+  plantillas_ughuanta:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_ughuanta
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.ughuanta
+    ports:
+      - "3018:3000"
+    networks:
+      - web
+
+  plantillas_uglamar:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_uglamar
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.uglamar
+    ports:
+      - "3019:3000"
+    networks:
+      - web
+
+  plantillas_uglucanas:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_uglucanas
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.uglucanas
+    ports:
+      - "3020:3000"
+    networks:
+      - web
+
+  plantillas_ugparinacochas:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_ugparinacochas
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.ugparinacochas
+    ports:
+      - "3021:3000"
+    networks:
+      - web
+
+  plantillas_ugsarasara:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_ugsarasara
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.ugsarasara
+    ports:
+      - "3022:3000"
+    networks:
+      - web
+
+  plantillas_ugsucre:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_ugsucre
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.ugsucre
+    ports:
+      - "3023:3000"
+    networks:
+      - web
+
+  plantillas_ugvilcas:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantillas_ugvilcas
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./envs/.env.ugvilcas
+    ports:
+      - "3024:3000"
+    networks:
+      - web
+
+networks:
+  web:
+    driver: bridge
