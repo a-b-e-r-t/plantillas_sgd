@@ -85,6 +85,12 @@ const Sidebar = () => {
                       {isOpen && <span>Nuevo documento</span>}
                     </div>
                   </Link>
+                  <Link href="/dashboard/doc-verifica" className="block py-2 text-muted-foreground dark:text-white hover:text-primary">
+                    <div className="flex items-center space-x-2">
+                      <Minus size={20} />
+                      {isOpen && <span>Verifica</span>}
+                    </div>
+                  </Link>
                 </li>
               </ul>
             )}
