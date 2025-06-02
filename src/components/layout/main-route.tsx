@@ -36,6 +36,15 @@ function MainRoute() {
         Documentos profesional
       </Link>
       <Link
+        href={"/dashboard/registro"}
+        className={`font-semibold hover:text-primary ${
+          pathname === "/dashboard/registro"
+            ? "border py-1 px-4 rounded-md border-primary text-primary hover:text-primary"
+            : "bg-secondary py-1 px-4 rounded-md hover:text-primary"
+        }`}>
+        Documentos verifica
+      </Link>
+      <Link
         href={"/dashboard/doc-verifica"}
         className={`font-semibold hover:text-primary ${
           pathname === "/dashboard/doc-verifica"
