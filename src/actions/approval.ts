@@ -8,16 +8,21 @@ export interface VistoBueno {
   co_dep: string;
   co_emp_vb: string;
   in_vb: string;
-  fe_vb: string;
+  fe_vb: string | null;
   co_use_cre: string;
   fe_use_cre: string;
   co_use_mod: string;
   fe_use_mod: string;
   obs_vb: string;
+  de_dependencia: string;
+  cdes_user: string;
+  co_dependencia: string;
+
 }
 
 export interface Empleado {
   cemp_codemp: string;
+  cdes_user: string;
 }
 
 export interface ActualizacionResult {
@@ -73,13 +78,13 @@ export async function TrabajadorAllDepen(
       `SELECT 
           e.cemp_codemp, 
           u.cdes_user
-       FROM 
-          "IDOSGD_GRA".idosgd.rhtm_per_empleados e
-       JOIN 
-          "IDOSGD_GRA".idosgd.seg_usuarios1 u 
-          ON u.cemp_codemp = e.cemp_codemp 
-       WHERE 
-          e.cemp_co_depend = $1 ORDER by u.cdes_user ASC
+        FROM 
+            "IDOSGD_GRA".idosgd.rhtm_per_empleados e
+        JOIN 
+            "IDOSGD_GRA".idosgd.seg_usuarios1 u 
+            ON u.cemp_codemp = e.cemp_codemp 
+        WHERE 
+            e.cemp_co_depend = $1 ORDER by u.cdes_user ASC
 `,
       [co_dependencia]
     );
@@ -91,12 +96,12 @@ export async function TrabajadorAllDepen(
 }
 
 export async function eliminarVistoBueno(
-  nu_emi: string
+  nu_emi: string,
 ): Promise<boolean> {
   try {
     await query(
       `DELETE FROM idosgd.tdtv_personal_vb
-       WHERE nu_emi = $1`,
+        WHERE nu_emi = $1`,
       [nu_emi]
     );
     return true;
@@ -109,55 +114,56 @@ export async function eliminarVistoBueno(
 export async function actualizarInVbConRestriccion(
   nu_emi: string,
   nuevoValor: string,
+  co_emp_vb: string,
 ): Promise<ActualizacionResult> {
+  console.log("Valores recibidos:", { nu_emi, nuevoValor, co_emp_vb });
   try {
     if (nuevoValor !== "0" && nuevoValor !== "1") {
       return {
         success: false,
-        message: "El valor debe ser '0' o '1'"
+        message: "El valor debe ser '0' o '1'",
       };
     }
 
     const [registro] = await query<{ in_vb: string }>(
-      `SELECT in_vb FROM idosgd.tdtv_personal_vb WHERE nu_emi = $1`,
-      [nu_emi]
+      `SELECT in_vb FROM idosgd.tdtv_personal_vb WHERE nu_emi = $1 AND co_emp_vb = $2`,
+      [nu_emi, co_emp_vb]
     );
 
     if (!registro) {
-      console.error("No existe registro con nu_emi:", nu_emi);
       return {
         success: false,
-        message: "No existe el registro especificado"
+        message: "No existe el registro especificado",
       };
     }
 
     const valorActual = registro.in_vb;
 
     if (valorActual === "0" && nuevoValor === "1") {
-      console.error("No se puede actualizar de SIN VISTO a CON VISTO");
       return {
         success: false,
-        message: "No se puede cambiar de 'Sin Visto' a 'Con Visto'"
+        message: "No se puede cambiar de 'Sin Visto' a 'Con Visto'",
       };
     }
 
     await query(
-      `UPDATE idosgd.tdtv_personal_vb SET in_vb = $1 WHERE nu_emi = $2`,
-      [nuevoValor, nu_emi]
+      `UPDATE idosgd.tdtv_personal_vb SET in_vb = $1 WHERE nu_emi = $2 AND co_emp_vb = $3`,
+      [nuevoValor, nu_emi, co_emp_vb]
     );
 
     return {
       success: true,
-      message: nuevoValor === "0"
-        ? "Cambiado a 'Sin Visto' correctamente"
-        : "Visto bueno actualizado correctamente"
+      message:
+        nuevoValor === "0"
+          ? "Cambiado a 'Sin Visto' correctamente"
+          : "Visto bueno actualizado correctamente",
     };
-    
   } catch (error) {
     console.error("Error al actualizar in_vb:", error);
     return {
       success: false,
-      message: "Error interno del servidor"
+      message: "Error interno del servidor",
     };
   }
 }
+

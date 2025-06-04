@@ -5,26 +5,19 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
+import type { VistoBueno,Empleado } from "@/actions/approval";
 import { Edit, Trash, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 import { useTheme } from "next-themes";
-
-interface VistoBueno {
-  de_dependencia: string;
-  cdes_user: string;
-  co_emp_vb: string;
-  in_vb: string;
-  fe_vb: string | null;
-  co_dependencia: string;
-  nu_emi: string; 
-}
 
 interface Props {
   data: VistoBueno[];
   onEdit: (item: VistoBueno) => void;
   onDelete: (item: VistoBueno) => void;
+  onGetTrabajadores: (co_dependencia: string) => void;
+  trabajadores: Empleado[];
 }
 
-export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
+export default function VistoBuenoTable({ data, onEdit, onDelete, onGetTrabajadores,trabajadores}: Props) {
   const { theme } = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredData, setFilteredData] = useState<VistoBueno[]>(data);
@@ -36,14 +29,14 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
   const [selectedItem, setSelectedItem] = useState<VistoBueno | null>(null);
   const [updatedIndicador, setUpdatedIndicador] = useState<string>("");
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedTrabajadorId, setSelectedTrabajadorId] = useState<string>("");
 
   useEffect(() => {
     const filtered = data.filter((item) =>
       (item.de_dependencia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       item.cdes_user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       (item.in_vb === "1" ? "CON VISTO" : "SIN VISTO").toLowerCase().includes(searchTerm.toLowerCase()))
+      item.cdes_user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.in_vb === "1" ? "CON VISTO" : "SIN VISTO").toLowerCase().includes(searchTerm.toLowerCase()))
     );
     setFilteredData(filtered);
     setCurrentPage(1);
@@ -69,12 +62,14 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
   };
 
   const openModal = (item: VistoBueno) => {
-    if (item.in_vb === "0") {
-      return; 
-    }
+
     setSelectedItem(item);
     setUpdatedIndicador(item.in_vb);
     setIsModalOpen(true);
+    setSelectedTrabajadorId(item.co_emp_vb || ""); 
+    if (onGetTrabajadores) {
+      onGetTrabajadores(item.co_dependencia);
+    }
   };
 
   const closeModal = () => {
@@ -86,7 +81,6 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
   const handleDeleteClick = (item: VistoBueno) => {
     setItemToDelete(item);
     setShowConfirm(true);
-    setIsClosing(false);
     setTimeout(() => setIsModalVisible(true), 50);
   };
 
@@ -94,12 +88,10 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
     if (itemToDelete) {
       setIsModalVisible(false);
       setTimeout(() => {
-        setIsClosing(true);
         setTimeout(() => {
           onDelete(itemToDelete);
           setShowConfirm(false);
           setItemToDelete(null);
-          setIsClosing(false);
           setIsModalVisible(false);
           setShowSuccessMessage(true);
           setTimeout(() => setShowSuccessMessage(false), 3000);
@@ -113,23 +105,22 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
     setTimeout(() => {
       setShowConfirm(false);
       setItemToDelete(null);
-      setIsClosing(false);
     }, 200);
   };
 
   const handleSaveChanges = () => {
     if (!selectedItem) return;
-    
+
     const updatedItem: VistoBueno = {
       ...selectedItem,
       in_vb: updatedIndicador,
+      co_emp_vb: selectedTrabajadorId, 
     };
-
-    if (updatedItem.in_vb !== selectedItem.in_vb) {
-      onEdit(updatedItem); 
+      onEdit(updatedItem);
       closeModal();
-    }
+    
   };
+
 
   return (
     <div className="space-y-4 bg-card p-4 rounded-lg border border-border">
@@ -189,7 +180,7 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
             </TableRow>
           ) : (
             currentPageData.map((item, idx) => (
-              <TableRow key={item.nu_emi || idx}>
+              <TableRow key={`${item.nu_emi}-${idx}`}>
                 <TableCell>{item.de_dependencia}</TableCell>
                 <TableCell>{item.cdes_user}</TableCell>
                 <TableCell>
@@ -208,7 +199,6 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
                       className={`rounded-full ${item.in_vb === "0" ? "opacity-50 cursor-not-allowed" : "text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white"}`}
                       title={item.in_vb === "0" ? "No se puede editar a CON VISTO" : "Editar"}
                       onClick={() => openModal(item)}
-                      disabled={item.in_vb === "0"}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -303,19 +293,21 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
             </div>
             <div className="mt-4">
               <p className="font-medium">Empleado:</p>
-              <Input
-                value={selectedItem.cdes_user}
-                readOnly
-                className="bg-gray-100 text-gray-500 cursor-not-allowed"
-              />
-            </div>
-            <div className="mt-4">
-              <p className="font-medium">Código de la dependencia:</p>
-              <Input
-                value={selectedItem.co_dependencia}
-                readOnly
-                className="bg-gray-100 text-gray-500 cursor-not-allowed"
-              />
+              <Select
+                value={selectedTrabajadorId}
+                onValueChange={(value) => setSelectedTrabajadorId(value)}
+              >
+                <SelectTrigger className="w-full border border-gray-300 rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-gray-800">
+                  <SelectValue placeholder="Seleccione un trabajador" />
+                </SelectTrigger>
+                <SelectContent>
+                  {trabajadores.map((empleado) => (
+                    <SelectItem key={empleado.cemp_codemp} value={empleado.cemp_codemp}>
+                      {empleado.cdes_user}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="mt-4">
               <p className="font-medium">Indicador:</p>

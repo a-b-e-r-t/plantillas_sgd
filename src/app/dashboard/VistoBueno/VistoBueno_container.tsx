@@ -6,7 +6,9 @@ import {
   eliminarVistoBueno,
   actualizarInVbConRestriccion,
   ActualizacionResult,
+  TrabajadorAllDepen,
 } from "@/actions/approval";
+import type { VistoBueno,Empleado } from "@/actions/approval";
 import VistoBuenoTable from "@/components/table/vistobueno-table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,16 +16,16 @@ import toasterCustom from "@/components/toaster-custom";
 import { toast } from "sonner";
 
 function VistoBueno() {
-  const [vbData, setVbData] = useState<any[]>([]);
+  const [vbData, setVbData] = useState<VistoBueno[]>([]);
   const [numeroDni, setNumeroDni] = useState<string>("");
   const [numeroDocumento, setNumeroDocumento] = useState<string>("");
-
+  const [trabajadoresDependencia, setTrabajadoresDependencia] = useState<Empleado[]>([]);
   const fetchData = async () => {
     try {
       if (numeroDni && numeroDocumento) {
         const documentoFormateado = numeroDocumento.padStart(6, "0");
         toasterCustom(0, "Buscando visto bueno...");
-        const resultadoVb = await obtenerVistoBuenoPorUsuarioYDoc(
+        const resultadoVb: VistoBueno[] = await obtenerVistoBuenoPorUsuarioYDoc(
           numeroDni,
           documentoFormateado
         );
@@ -40,30 +42,36 @@ function VistoBueno() {
     }
   };
 
-  const handleEdit = async (item: any) => {
+  const handleEdit = async (item: VistoBueno) => {
+    console.log("Datos recibidos del modal para enviar al backendddddd:", item);
     if (item.in_vb === "0") {
       const nuevoValor = "0";
-      const codDependencia = item.cod_dependencia; 
-
+      const co_emp_vb = item.co_emp_vb;
       try {
         toasterCustom(0, "Actualizando visto bueno...");
         const resultado: ActualizacionResult = await actualizarInVbConRestriccion(
           item.nu_emi,
           nuevoValor,
+          co_emp_vb,
         );
         toast.dismiss();
 
         if (resultado.success) {
           setVbData((prev) =>
             prev.map((vb) =>
-              vb.nu_emi === item.nu_emi ? { ...vb, in_vb: nuevoValor } : vb
+              vb.nu_emi === item.nu_emi && vb.co_emp_vb === co_emp_vb
+                ? { ...vb, in_vb: nuevoValor }
+                : vb
             )
           );
           toasterCustom(200, resultado.message);
+          if (item.co_dependencia) {
+            await handleGet(item.co_dependencia);
+          }
         } else {
           toasterCustom(400, resultado.message);
         }
-      } catch (error) {
+      } catch {
         toast.dismiss();
         toasterCustom(500, "Error al actualizar el registro");
       }
@@ -73,14 +81,12 @@ function VistoBueno() {
     }
   };
 
-  const handleDelete = async (item: any) => {
+  const handleDelete = async (item: VistoBueno) => {
     try {
       toasterCustom(0, "Eliminando visto bueno...");
       const eliminado = await eliminarVistoBueno(item.nu_emi);
       if (eliminado) {
-        setVbData((prev: any[]) =>
-          prev.filter((vb) => vb.nu_emi !== item.nu_emi)
-        );
+        setVbData((prev) => prev.filter((vb) => vb.nu_emi !== item.nu_emi));
         toast.dismiss();
         toasterCustom(200, "Registro eliminado exitosamente");
       } else {
@@ -94,22 +100,16 @@ function VistoBueno() {
     }
   };
 
-  // const handleGet = async (item: any) => {
-  //   try {
-  //       toasterCustom(0, "Cargando empleados de la dependencia...");
-  //       const codDependencia = item.cod_dependencia;
+  const handleGet = async (co_dependencia: string) => {
+    try {
+      const trabajadores = await TrabajadorAllDepen(co_dependencia);
+      setTrabajadoresDependencia(trabajadores);
+    } catch (error) {
+      console.error("Error al obtener trabajadores:", error);
+      toasterCustom(500, "Error al cargar trabajadores");
+    }
+  };
 
-  //       const empleados: Empleado[] = await TrabajadorAllDepen(codDependencia);
-
-  //       setDatosDependencia(empleados);
-
-  //       toasterCustom(200, "Empleados cargados correctamente");
-  //     } catch (error) {
-  //       toasterCustom(500, "Error al cargar empleados de la dependencia");
-  //     } finally {
-  //       toast.dismiss();
-  //     }
-  // };
 
   return (
     <div className="p-4 space-y-6">
@@ -140,7 +140,13 @@ function VistoBueno() {
 
       <div>
         <h2 className="text-lg font-semibold">Datos de visto bueno</h2>
-        <VistoBuenoTable data={vbData} onEdit={handleEdit} onDelete={handleDelete} />
+        <VistoBuenoTable
+          data={vbData}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onGetTrabajadores={handleGet}
+          trabajadores={trabajadoresDependencia}
+        />
       </div>
     </div>
   );
