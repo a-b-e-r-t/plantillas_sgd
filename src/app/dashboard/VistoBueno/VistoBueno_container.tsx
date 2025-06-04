@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { obtenerVistoBuenoPorUsuarioYDoc  } from "@/actions/approval";
+import {
+  obtenerVistoBuenoPorUsuarioYDoc,
+  eliminarVistoBueno,
+  actualizarInVbConRestriccion,
+  ActualizacionResult,
+} from "@/actions/approval";
 import VistoBuenoTable from "@/components/table/vistobueno-table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import toasterCustom from "@/components/toaster-custom";
+import { toast } from "sonner";
 
 function VistoBueno() {
   const [vbData, setVbData] = useState<any[]>([]);
@@ -15,22 +22,94 @@ function VistoBueno() {
     try {
       if (numeroDni && numeroDocumento) {
         const documentoFormateado = numeroDocumento.padStart(6, "0");
-        const resultadoVb = await obtenerVistoBuenoPorUsuarioYDoc(numeroDni, documentoFormateado);
+        toasterCustom(0, "Buscando visto bueno...");
+        const resultadoVb = await obtenerVistoBuenoPorUsuarioYDoc(
+          numeroDni,
+          documentoFormateado
+        );
         setVbData(resultadoVb);
-        
+        toast.dismiss();
+        toasterCustom(200, "Datos cargados correctamente");
+      } else {
+        toasterCustom(400, "Debe ingresar el DNI y el número de documento");
       }
     } catch (error) {
+      toast.dismiss();
       console.error("Error al obtener los datos:", error);
+      toasterCustom(500, "Error al obtener los datos");
     }
   };
 
-  const handleEdit = (item: any) => {
-    console.log("Editando:", item);
+  const handleEdit = async (item: any) => {
+    if (item.in_vb === "0") {
+      const nuevoValor = "0";
+      const codDependencia = item.cod_dependencia; 
+
+      try {
+        toasterCustom(0, "Actualizando visto bueno...");
+        const resultado: ActualizacionResult = await actualizarInVbConRestriccion(
+          item.nu_emi,
+          nuevoValor,
+        );
+        toast.dismiss();
+
+        if (resultado.success) {
+          setVbData((prev) =>
+            prev.map((vb) =>
+              vb.nu_emi === item.nu_emi ? { ...vb, in_vb: nuevoValor } : vb
+            )
+          );
+          toasterCustom(200, resultado.message);
+        } else {
+          toasterCustom(400, resultado.message);
+        }
+      } catch (error) {
+        toast.dismiss();
+        toasterCustom(500, "Error al actualizar el registro");
+      }
+    } else {
+      toasterCustom(400, "No se puede cambiar de 'Sin Visto' a 'Con Visto'");
+      return;
+    }
   };
 
-  const handleDelete = (item: any) => {
-    console.log("Eliminando:", item);
+  const handleDelete = async (item: any) => {
+    try {
+      toasterCustom(0, "Eliminando visto bueno...");
+      const eliminado = await eliminarVistoBueno(item.nu_emi);
+      if (eliminado) {
+        setVbData((prev: any[]) =>
+          prev.filter((vb) => vb.nu_emi !== item.nu_emi)
+        );
+        toast.dismiss();
+        toasterCustom(200, "Registro eliminado exitosamente");
+      } else {
+        toast.dismiss();
+        toasterCustom(400, "No se pudo eliminar el registro");
+      }
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error al eliminar:", error);
+      toasterCustom(500, "Error al eliminar el registro");
+    }
   };
+
+  // const handleGet = async (item: any) => {
+  //   try {
+  //       toasterCustom(0, "Cargando empleados de la dependencia...");
+  //       const codDependencia = item.cod_dependencia;
+
+  //       const empleados: Empleado[] = await TrabajadorAllDepen(codDependencia);
+
+  //       setDatosDependencia(empleados);
+
+  //       toasterCustom(200, "Empleados cargados correctamente");
+  //     } catch (error) {
+  //       toasterCustom(500, "Error al cargar empleados de la dependencia");
+  //     } finally {
+  //       toast.dismiss();
+  //     }
+  // };
 
   return (
     <div className="p-4 space-y-6">
@@ -61,11 +140,7 @@ function VistoBueno() {
 
       <div>
         <h2 className="text-lg font-semibold">Datos de visto bueno</h2>
-        <VistoBuenoTable
-          data={vbData}
-          onEdit={handleEdit}  
-          onDelete={handleDelete}  
-        />
+        <VistoBuenoTable data={vbData} onEdit={handleEdit} onDelete={handleDelete} />
       </div>
     </div>
   );

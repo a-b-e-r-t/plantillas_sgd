@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
-import { Edit, Trash, ChevronLeft, ChevronRight } from "lucide-react";
+import { Edit, Trash, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 import { useTheme } from "next-themes";
 
 interface VistoBueno {
@@ -15,6 +15,7 @@ interface VistoBueno {
   in_vb: string;
   fe_vb: string | null;
   co_dependencia: string;
+  nu_emi: string; 
 }
 
 interface Props {
@@ -29,18 +30,20 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
   const [filteredData, setFilteredData] = useState<VistoBueno[]>(data);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
-
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<VistoBueno | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<VistoBueno | null>(null);
-  const [updatedDependencia, setUpdatedDependencia] = useState("");
-  const [updatedEmpleado, setUpdatedEmpleado] = useState("");
-  const [updatedIndicador, setUpdatedIndicador] = useState("");
+  const [updatedIndicador, setUpdatedIndicador] = useState<string>("");
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   useEffect(() => {
     const filtered = data.filter((item) =>
-      (item.de_dependencia && item.de_dependencia.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (item.cdes_user && item.cdes_user.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (item.in_vb && item.in_vb.toLowerCase().includes(searchTerm.toLowerCase()))
+      (item.de_dependencia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       item.cdes_user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       (item.in_vb === "1" ? "CON VISTO" : "SIN VISTO").toLowerCase().includes(searchTerm.toLowerCase()))
     );
     setFilteredData(filtered);
     setCurrentPage(1);
@@ -66,9 +69,10 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
   };
 
   const openModal = (item: VistoBueno) => {
+    if (item.in_vb === "0") {
+      return; 
+    }
     setSelectedItem(item);
-    setUpdatedDependencia(item.de_dependencia);
-    setUpdatedEmpleado(item.cdes_user);
     setUpdatedIndicador(item.in_vb);
     setIsModalOpen(true);
   };
@@ -76,28 +80,74 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedItem(null);
+    setUpdatedIndicador("");
+  };
+
+  const handleDeleteClick = (item: VistoBueno) => {
+    setItemToDelete(item);
+    setShowConfirm(true);
+    setIsClosing(false);
+    setTimeout(() => setIsModalVisible(true), 50);
+  };
+
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      setIsModalVisible(false);
+      setTimeout(() => {
+        setIsClosing(true);
+        setTimeout(() => {
+          onDelete(itemToDelete);
+          setShowConfirm(false);
+          setItemToDelete(null);
+          setIsClosing(false);
+          setIsModalVisible(false);
+          setShowSuccessMessage(true);
+          setTimeout(() => setShowSuccessMessage(false), 3000);
+        }, 200);
+      }, 200);
+    }
+  };
+
+  const cancelDelete = () => {
+    setIsModalVisible(false);
+    setTimeout(() => {
+      setShowConfirm(false);
+      setItemToDelete(null);
+      setIsClosing(false);
+    }, 200);
   };
 
   const handleSaveChanges = () => {
-    if (
-      selectedItem &&
-      (updatedDependencia !== selectedItem.de_dependencia ||
-        updatedEmpleado !== selectedItem.cdes_user ||
-        updatedIndicador !== selectedItem.in_vb)
-    ) {
-      const updatedItem: VistoBueno = {
-        ...selectedItem,
-        de_dependencia: updatedDependencia,
-        cdes_user: updatedEmpleado,
-        in_vb: updatedIndicador,
-      };
-      onEdit(updatedItem);
+    if (!selectedItem) return;
+    
+    const updatedItem: VistoBueno = {
+      ...selectedItem,
+      in_vb: updatedIndicador,
+    };
+
+    if (updatedItem.in_vb !== selectedItem.in_vb) {
+      onEdit(updatedItem); 
       closeModal();
     }
   };
 
   return (
     <div className="space-y-4 bg-card p-4 rounded-lg border border-border">
+      {/* Toast de éxito */}
+      {showSuccessMessage && (
+        <div className={`fixed top-4 left-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg transition-all duration-300 transform min-w-[300px] ${showSuccessMessage ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
+          } ${theme === "dark" ? "bg-gray-800 text-white border border-gray-700" : "bg-white text-gray-900 border border-gray-200"
+          }`}>
+          <div className="flex items-center justify-center w-8 h-8 bg-green-500 rounded-full flex-shrink-0">
+            <CheckCircle className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <p className="font-medium text-sm">Correcto</p>
+            <p className="text-xs opacity-80">Acción realizada correctamente.</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-4 gap-4">
         <Input
           placeholder="Buscar por dependencia, empleado o indicador..."
@@ -139,14 +189,12 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
             </TableRow>
           ) : (
             currentPageData.map((item, idx) => (
-              <TableRow key={idx}>
+              <TableRow key={item.nu_emi || idx}>
                 <TableCell>{item.de_dependencia}</TableCell>
                 <TableCell>{item.cdes_user}</TableCell>
                 <TableCell>
                   <span
-                    className={`inline-block px-2 py-1 rounded-full text-white ${
-                      item.in_vb === "1" ? "bg-green-500" : "bg-red-500"
-                    }`}
+                    className={`inline-block px-2 py-1 rounded-full text-white ${item.in_vb === "1" ? "bg-green-500" : "bg-red-500"}`}
                   >
                     {item.in_vb === "1" ? "CON VISTO" : "SIN VISTO"}
                   </span>
@@ -157,9 +205,10 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="rounded-full text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white"
-                      title="Editar"
+                      className={`rounded-full ${item.in_vb === "0" ? "opacity-50 cursor-not-allowed" : "text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white"}`}
+                      title={item.in_vb === "0" ? "No se puede editar a CON VISTO" : "Editar"}
                       onClick={() => openModal(item)}
+                      disabled={item.in_vb === "0"}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -168,7 +217,7 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
                       size="icon"
                       className="rounded-full text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
                       title="Eliminar"
-                      onClick={() => onDelete(item)}
+                      onClick={() => handleDeleteClick(item)}
                     >
                       <Trash className="h-4 w-4" />
                     </Button>
@@ -200,18 +249,54 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
         </Button>
       </div>
 
+      {/* Modal de confirmación para eliminar con animaciones suaves */}
+      {showConfirm && (
+        <div
+          className={`fixed inset-0 flex items-center justify-center z-50 transition-all duration-200 ease-out ${isModalVisible ? 'bg-black bg-opacity-50' : 'bg-black bg-opacity-0'}`}
+        >
+          <div
+            className={`p-6 rounded-lg shadow-xl max-w-sm w-full mx-4 transition-all duration-200 ease-out transform ${isModalVisible ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-2'} ${theme === "dark" ? "bg-gray-800 text-white border border-gray-700" : "bg-white text-gray-900 border border-gray-200"}`}
+          >
+            <div className="text-center">
+              <div className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4 ${theme === "dark" ? "bg-red-900/20" : "bg-red-100"}`}>
+                <Trash className={`h-6 w-6 ${theme === "dark" ? "text-red-400" : "text-red-600"}`} />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Confirmar eliminación</h3>
+              <p className={`text-sm mb-6 ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                ¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <div className="flex justify-center gap-3">
+              <Button
+                variant="outline"
+                onClick={cancelDelete}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDelete}
+                className="flex-1"
+              >
+                Eliminar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de edición */}
       {isModalOpen && selectedItem && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-500 bg-opacity-50">
           <div
-            className={`p-6 rounded-lg shadow-lg max-w-md w-full ${
-              theme === "dark" ? "bg-gray-800 text-white" : "bg-white text-black"
-            }`}
+            className={`p-6 rounded-lg shadow-lg max-w-md w-full ${theme === "dark" ? "bg-gray-800 text-white" : "bg-white text-black"}`}
           >
             <h2 className="text-xl font-semibold mb-4">Modificar Visto Bueno</h2>
             <div>
               <p className="font-medium">Dependencia:</p>
               <Input
-                value={updatedDependencia}
+                value={selectedItem.de_dependencia}
                 readOnly
                 className="bg-gray-100 text-gray-500 cursor-not-allowed"
               />
@@ -219,8 +304,9 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
             <div className="mt-4">
               <p className="font-medium">Empleado:</p>
               <Input
-                value={updatedEmpleado}
-                onChange={(e) => setUpdatedEmpleado(e.target.value)}
+                value={selectedItem.cdes_user}
+                readOnly
+                className="bg-gray-100 text-gray-500 cursor-not-allowed"
               />
             </div>
             <div className="mt-4">
@@ -233,33 +319,19 @@ export default function VistoBuenoTable({ data, onEdit, onDelete }: Props) {
             </div>
             <div className="mt-4">
               <p className="font-medium">Indicador:</p>
-              <Select
+              <select
                 value={updatedIndicador}
-                onValueChange={setUpdatedIndicador}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Seleccionar indicador" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">CON VISTO</SelectItem>
-                  <SelectItem value="0">SIN VISTO</SelectItem>
-                </SelectContent>
-              </Select>
+                onChange={(e) => setUpdatedIndicador(e.target.value)}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-gray-800">
+                <option value="1">CON VISTO</option>
+                <option value="0">SIN VISTO</option>
+              </select>
             </div>
-            <div className="mt-6 flex justify-end space-x-2">
+            <div className="mt-6 flex justify-end space-x-4">
               <Button variant="outline" onClick={closeModal}>
-                Cerrar
+                Cancelar
               </Button>
-              <Button
-                onClick={handleSaveChanges}
-                disabled={
-                  updatedDependencia === selectedItem.de_dependencia &&
-                  updatedEmpleado === selectedItem.cdes_user &&
-                  updatedIndicador === selectedItem.in_vb
-                }
-              >
-                Guardar cambios
-              </Button>
+              <Button onClick={handleSaveChanges}>Guardar</Button>
             </div>
           </div>
         </div>

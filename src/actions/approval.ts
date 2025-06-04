@@ -20,6 +20,11 @@ export interface Empleado {
   cemp_codemp: string;
 }
 
+export interface ActualizacionResult {
+  success: boolean;
+  message: string;
+}
+
 export async function obtenerVistoBuenoPorUsuarioYDoc(
   co_use_cre: string,
   docParcial: string
@@ -29,12 +34,13 @@ export async function obtenerVistoBuenoPorUsuarioYDoc(
 
     const result = await query<VistoBueno>(
       `SELECT 
+            vb.nu_emi,
             rd.co_dependencia,
             rd.de_dependencia,
             vb.co_emp_vb, 
             su.cdes_user,
             vb.in_vb,
-            vb.fe_vb  -- Traemos solo el nombre de la dependencia
+            vb.fe_vb 
         FROM 
             idosgd.tdtv_personal_vb vb
         JOIN
@@ -81,5 +87,77 @@ export async function TrabajadorAllDepen(
   } catch (error) {
     console.error("Error al obtener empleados por dependencia:", error);
     return [];
+  }
+}
+
+export async function eliminarVistoBueno(
+  nu_emi: string
+): Promise<boolean> {
+  try {
+    await query(
+      `DELETE FROM idosgd.tdtv_personal_vb
+       WHERE nu_emi = $1`,
+      [nu_emi]
+    );
+    return true;
+  } catch (error) {
+    console.error("Error al eliminar visto bueno:", error);
+    return false;
+  }
+}
+
+export async function actualizarInVbConRestriccion(
+  nu_emi: string,
+  nuevoValor: string,
+): Promise<ActualizacionResult> {
+  try {
+    if (nuevoValor !== "0" && nuevoValor !== "1") {
+      return {
+        success: false,
+        message: "El valor debe ser '0' o '1'"
+      };
+    }
+
+    const [registro] = await query<{ in_vb: string }>(
+      `SELECT in_vb FROM idosgd.tdtv_personal_vb WHERE nu_emi = $1`,
+      [nu_emi]
+    );
+
+    if (!registro) {
+      console.error("No existe registro con nu_emi:", nu_emi);
+      return {
+        success: false,
+        message: "No existe el registro especificado"
+      };
+    }
+
+    const valorActual = registro.in_vb;
+
+    if (valorActual === "0" && nuevoValor === "1") {
+      console.error("No se puede actualizar de SIN VISTO a CON VISTO");
+      return {
+        success: false,
+        message: "No se puede cambiar de 'Sin Visto' a 'Con Visto'"
+      };
+    }
+
+    await query(
+      `UPDATE idosgd.tdtv_personal_vb SET in_vb = $1 WHERE nu_emi = $2`,
+      [nuevoValor, nu_emi]
+    );
+
+    return {
+      success: true,
+      message: nuevoValor === "0"
+        ? "Cambiado a 'Sin Visto' correctamente"
+        : "Visto bueno actualizado correctamente"
+    };
+    
+  } catch (error) {
+    console.error("Error al actualizar in_vb:", error);
+    return {
+      success: false,
+      message: "Error interno del servidor"
+    };
   }
 }
