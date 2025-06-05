@@ -114,9 +114,9 @@ export async function eliminarVistoBueno(
 export async function actualizarInVbConRestriccion(
   nu_emi: string,
   nuevoValor: string,
-  co_emp_vb: string,
+  co_dep: string,
+  co_emp_vb: string
 ): Promise<ActualizacionResult> {
-  console.log("Valores recibidos:", { nu_emi, nuevoValor, co_emp_vb });
   try {
     if (nuevoValor !== "0" && nuevoValor !== "1") {
       return {
@@ -126,8 +126,8 @@ export async function actualizarInVbConRestriccion(
     }
 
     const [registro] = await query<{ in_vb: string }>(
-      `SELECT in_vb FROM idosgd.tdtv_personal_vb WHERE nu_emi = $1 AND co_emp_vb = $2`,
-      [nu_emi, co_emp_vb]
+      `SELECT in_vb FROM idosgd.tdtv_personal_vb WHERE nu_emi = $1 AND co_dep = $2`,
+      [nu_emi, co_dep]
     );
 
     if (!registro) {
@@ -147,8 +147,8 @@ export async function actualizarInVbConRestriccion(
     }
 
     await query(
-      `UPDATE idosgd.tdtv_personal_vb SET in_vb = $1 WHERE nu_emi = $2 AND co_emp_vb = $3`,
-      [nuevoValor, nu_emi, co_emp_vb]
+      `UPDATE idosgd.tdtv_personal_vb SET in_vb = $1, co_emp_vb = $4 WHERE nu_emi = $2 AND co_dep = $3`,
+      [nuevoValor, nu_emi, co_dep, co_emp_vb]
     );
 
     return {

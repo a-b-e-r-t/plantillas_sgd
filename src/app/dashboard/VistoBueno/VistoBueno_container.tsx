@@ -43,24 +43,28 @@ function VistoBueno() {
   };
 
   const handleEdit = async (item: VistoBueno) => {
-    console.log("Datos recibidos del modal para enviar al backendddddd:", item);
-    if (item.in_vb === "0") {
+    if (item.in_vb === "0" || item.in_vb === "1") {
       const nuevoValor = "0";
+      const co_dependencia = item.co_dependencia;
       const co_emp_vb = item.co_emp_vb;
       try {
         toasterCustom(0, "Actualizando visto bueno...");
         const resultado: ActualizacionResult = await actualizarInVbConRestriccion(
           item.nu_emi,
           nuevoValor,
+          co_dependencia,
           co_emp_vb,
         );
         toast.dismiss();
 
         if (resultado.success) {
+          const empleadoSeleccionado = trabajadoresDependencia.find(
+          emp => emp.cemp_codemp === item.co_emp_vb
+          );
           setVbData((prev) =>
             prev.map((vb) =>
-              vb.nu_emi === item.nu_emi && vb.co_emp_vb === co_emp_vb
-                ? { ...vb, in_vb: nuevoValor }
+              vb.nu_emi === item.nu_emi && vb.co_dependencia === co_dependencia
+                ? { ...vb, in_vb: nuevoValor, cdes_user: empleadoSeleccionado?.cdes_user || vb.cdes_user }
                 : vb
             )
           );

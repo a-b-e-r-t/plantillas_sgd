@@ -199,6 +199,7 @@ export default function VistoBuenoTable({ data, onEdit, onDelete, onGetTrabajado
                       className={`rounded-full ${item.in_vb === "0" ? "opacity-50 cursor-not-allowed" : "text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white"}`}
                       title={item.in_vb === "0" ? "No se puede editar a CON VISTO" : "Editar"}
                       onClick={() => openModal(item)}
+                      disabled={item.in_vb === "0"}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
